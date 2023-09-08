@@ -9,7 +9,7 @@ crypted netcat in golang
 # usage
 
 ```
-usage: netcat [-l] [-v] [-p port] [-n tcp]
+usage: kncat [-l] [-v] [-p port] [-n tcp]
 options:
   -e    shell mode
   -h string

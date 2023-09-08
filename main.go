@@ -70,7 +70,7 @@ func init() {
 
 func usage() {
 	fmt.Println(`
-usage: netcat [-l] [-v] [-p port] [-n tcp]
+usage: kncat [-l] [-v] [-p port] [-n tcp] -k secret
 options:`)
 	flag.PrintDefaults()
 }
