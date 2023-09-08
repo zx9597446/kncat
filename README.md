@@ -1,6 +1,13 @@
 # kncat
 crypted netcat in golang
 
+# install
+
+ ``` go install github.com/zx9597446/kncat@latest ```
+
+
+# usage
+
 ```
 usage: netcat [-l] [-v] [-p port] [-n tcp]
 options:
@@ -21,6 +28,6 @@ options:
   -v    verbose mode (default true)
 ```
 
-# reference:
+# reference & thanks:
 1. https://github.com/jiguangsdf/netcat
 2. https://github.com/getqujing/qtunnel
