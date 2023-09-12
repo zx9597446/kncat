@@ -55,9 +55,11 @@ crypted netcat in golang. a network tunneling software working as an encryption 
       ```kncat -s secret_key -c svr:9597 -f 127.0.0.1:6379```
 
 
-# install
+# installtion
 
  ``` go install github.com/zx9597446/kncat@latest ```
+
+      or download from releases
 
 
 # usage
