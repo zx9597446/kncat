@@ -9,6 +9,25 @@ import (
 	"os"
 )
 
+func startReverseClient(cfg Config) {
+	conn, err := net.Dial(cfg.flgNetwork, cfg.flgConnectAddr)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	cconn := NewCryptConn(conn, cfg.flgCryptoMethod, []byte(cfg.flgSecretKey))
+	if err = cconn.ClientHandshake(); err != nil {
+		log.Fatalf("client handshake error: %s\n", err)
+	}
+	if cfg.flgCommand == "" {
+		log.Fatalf("no command to execute")
+	}
+	if err := pipeCmd2Conn(cfg.flgCommand, cconn); err != nil {
+		logf("pipe local command error: %s", err)
+	}
+	logf("pipe local command done")
+	os.Exit(0)
+}
+
 func startClient(cfg Config) {
 	conn, err := net.Dial(cfg.flgNetwork, cfg.flgConnectAddr)
 	if err != nil {

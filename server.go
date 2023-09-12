@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"strings"
 	"time"
 )
 
@@ -29,29 +28,34 @@ func startServer(cfg Config) {
 			cconn.Close()
 			continue
 		}
-		if cfg.flgFwdAddr != "" {
+		if cfg.flgReverse {
+			if err := pipe2SvrStdinStdout(cconn); err != nil {
+				logf("pipe server console error: %s", err)
+			}
+			logf("pipe server console done")
+		} else if cfg.flgFwdAddr != "" {
 			if err := pipe2SvrConn(cfg, cconn); err != nil {
 				logf("pipe server connection error: %s", err)
 			}
 			logf("pipe server connection done")
 		} else if cfg.flgCommand != "" {
-			if err := pipe2SvrCmd(cfg, cconn); err != nil {
+			if err := pipeCmd2Conn(cfg.flgCommand, cconn); err != nil {
 				logf("pipe server command error: %s", err)
 			}
 			logf("pipe server command done")
 		} else {
-			if err := pipe2SvrConsole(cconn); err != nil {
-				logf("pipe server console error: %s", err)
+			if err := pipe2SvrStdout(cconn); err != nil {
+				logf("pipe server stdout error: %s", err)
 			}
-			logf("pipe server console done")
+			logf("pipe server stdout done")
 		}
 	}
 }
 
-func pipe2SvrCmd(cfg Config, cconn *CryptConn) (err error) {
+func pipeCmd2Conn(strCmd string, cconn *CryptConn) (err error) {
 	defer cconn.Close()
-	cmdWithArgs := strings.Split(cfg.flgCommand, " ")
-	cmd := exec.Command(cmdWithArgs[0], cmdWithArgs[1:]...)
+	exe, args := parseCmd(strCmd)
+	cmd := exec.Command(exe, args...)
 	cmd.Stdin = cconn
 	cmd.Stdout = cconn
 	cmd.Stderr = cconn
@@ -84,11 +88,26 @@ func pipe2SvrConn(cfg Config, cconn *CryptConn) (err error) {
 	return
 }
 
-func pipe2SvrConsole(cconn *CryptConn) (err error) {
+func pipe2SvrStdout(cconn *CryptConn) (err error) {
 	defer cconn.Close()
 	sigs := make(chan error, 1)
 	go func() {
 		_, err := io.Copy(os.Stdout, cconn)
+		sigs <- err
+	}()
+	err = <-sigs
+	return
+}
+
+func pipe2SvrStdinStdout(cconn *CryptConn) (err error) {
+	defer cconn.Close()
+	sigs := make(chan error, 1)
+	go func() {
+		_, err := io.Copy(os.Stdout, cconn)
+		sigs <- err
+	}()
+	go func() {
+		_, err := io.Copy(cconn, os.Stdin)
 		sigs <- err
 	}()
 	err = <-sigs

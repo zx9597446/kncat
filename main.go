@@ -14,6 +14,7 @@ type Config struct {
 	flgSecretKey, flgCryptoMethod             string
 	flgVerbose                                bool
 	flgFwdAddr, flgCommand                    string
+	flgReverse                                bool
 }
 
 var cfg = Config{}
@@ -29,14 +30,15 @@ func logf(f string, v ...interface{}) {
 }
 
 func init() {
-	flag.StringVar(&cfg.flgListenAddr, "l", ":9597", "listen address")
-	flag.StringVar(&cfg.flgConnectAddr, "c", "", "connect address")
-	flag.StringVar(&cfg.flgSecretKey, "s", "", "secret key")
-	flag.StringVar(&cfg.flgCryptoMethod, "m", "rc4", "crypto method (rc4 or aes256cfb)")
+	flag.StringVar(&cfg.flgListenAddr, "l", ":9597", "for server: listening on")
+	flag.StringVar(&cfg.flgConnectAddr, "c", "", "for client: connect to")
+	flag.StringVar(&cfg.flgSecretKey, "s", "", "your secret key")
+	flag.StringVar(&cfg.flgCryptoMethod, "m", "aes256cfb", "crypto method (rc4 or aes256cfb)")
 	flag.StringVar(&cfg.flgNetwork, "n", "tcp", "network protocol: tcp tcp4 tcp6")
-	flag.StringVar(&cfg.flgCommand, "e", "", "program to execute (such as cmd.exe or /bin/bash)")
-	flag.StringVar(&cfg.flgFwdAddr, "f", "", "forward address")
+	flag.StringVar(&cfg.flgCommand, "e", "", "for server: program to execute (cmd.exe or /bin/bash or with args: cat -- some.log, use -- split args)")
+	flag.StringVar(&cfg.flgFwdAddr, "f", "", "forward address(server: connect to this address. client: accept on this address)")
 
+	flag.BoolVar(&cfg.flgReverse, "r", false, "reverse mode: connect and execute program on client side, to get a reverse shell")
 	flag.BoolVar(&cfg.flgVerbose, "v", false, "verbose output")
 
 	flag.Parse()
@@ -45,7 +47,11 @@ func init() {
 func main() {
 	if cfg.flgConnectAddr != "" {
 		logf("connect to %s", cfg.flgConnectAddr)
-		go startClient(cfg)
+		if !cfg.flgReverse {
+			go startClient(cfg)
+		} else {
+			go startReverseClient(cfg)
+		}
 	} else if cfg.flgListenAddr != "" {
 		logf("listen on %s", cfg.flgListenAddr)
 		go startServer(cfg)
