@@ -59,8 +59,6 @@ crypted netcat in golang. a network tunneling software working as an encryption 
 
  ``` go install github.com/zx9597446/kncat@latest ```
 
-      or download from releases
-
 
 # usage
 
