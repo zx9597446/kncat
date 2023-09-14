@@ -1,6 +1,12 @@
 # kncat
 
-crypted netcat in golang. a network tunneling software working as an encryption wrapper between clients and servers (remote/local). It can pipe connections(remote/local) or cli app's stdin/stdout. It works interactive(shell or reverse shell) or batch mode.
+crypted netcat in golang.
+
+A network tunneling software working as an encryption wrapper between clients and servers (remote/local).
+
+It can pipe connections or cli app's stdin/stdout. It works interactive(shell or reverse shell) or batch mode. It works in forward or reverse mode.
+
+It blocks unauthorized connection by a secret key. and the secret key never pass through the network.
 
 # examples
 
@@ -24,7 +30,7 @@ crypted netcat in golang. a network tunneling software working as an encryption 
 
       ```kncat -s secret_key -c svr:9597```
 
-3. get a reverse shell from client on server.
+3. reverse mode: get a reverse shell from client on server.
 
       server:
 
@@ -53,6 +59,17 @@ crypted netcat in golang. a network tunneling software working as an encryption 
       client:
 
       ```kncat -s secret_key -c svr:9597 -f 127.0.0.1:6379```
+
+
+5. reverse mode: pipe local's redis port 127.0.0.1:6379 to server 127.0.0.1:6379.
+
+      server:
+
+      ```kncat -s secret_key -r -f 127.0.0.1:6379```
+
+      client:
+
+      ```kncat -s secret_key -c svr:9597 -r -f 127.0.0.1:6379```
 
 
 # installtion

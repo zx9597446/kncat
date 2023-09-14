@@ -1,12 +1,9 @@
 package main
 
 import (
-	"io"
 	"log"
 	"net"
 	"os"
-	"os/exec"
-	"time"
 )
 
 func startServer(cfg Config) {
@@ -28,88 +25,28 @@ func startServer(cfg Config) {
 			cconn.Close()
 			continue
 		}
-		if cfg.flgReverse {
-			if err := pipe2SvrStdinStdout(cconn); err != nil {
-				logf("pipe server console error: %s", err)
+		go func() {
+			if err := runServer(cfg, cconn); err != nil {
+				logf("server run error: %s\n", err)
 			}
-			logf("pipe server console done")
-		} else if cfg.flgFwdAddr != "" {
-			if err := pipe2SvrConn(cfg, cconn); err != nil {
-				logf("pipe server connection error: %s", err)
-			}
-			logf("pipe server connection done")
-		} else if cfg.flgCommand != "" {
-			if err := pipeCmd2Conn(cfg.flgCommand, cconn); err != nil {
-				logf("pipe server command error: %s", err)
-			}
-			logf("pipe server command done")
+		}()
+	}
+}
+
+func runServer(cfg Config, cconn *CryptConn) (err error) {
+	if cfg.flgFwdAddr != "" {
+		return serverForwardPort(cfg.flgReverse, cfg.flgNetwork, cfg.flgFwdAddr, cconn)
+	} else if cfg.flgCommand != "" {
+		if !cfg.flgReverse {
+			return pipeCmd2Conn(cfg.flgCommand, cconn)
 		} else {
-			if err := pipe2SvrStdout(cconn); err != nil {
-				logf("pipe server stdout error: %s", err)
-			}
-			logf("pipe server stdout done")
+			return pipeStdInOut(os.Stdin, os.Stdout, cconn)
+		}
+	} else {
+		if !cfg.flgReverse {
+			return pipeOut(os.Stdout, cconn)
+		} else {
+			return pipeIn(os.Stdin, cconn)
 		}
 	}
-}
-
-func pipeCmd2Conn(strCmd string, cconn *CryptConn) (err error) {
-	defer cconn.Close()
-	exe, args := parseCmd(strCmd)
-	cmd := exec.Command(exe, args...)
-	cmd.Stdin = cconn
-	cmd.Stdout = cconn
-	cmd.Stderr = cconn
-	sigs := make(chan error, 1)
-	go monitorProcess(cmd, sigs)
-	go func() {
-		err := cmd.Run()
-		sigs <- err
-	}()
-	err = <-sigs
-	return
-}
-
-func monitorProcess(cmd *exec.Cmd, sigs chan error) {
-	for {
-		if cmd.ProcessState != nil && cmd.ProcessState.Exited() {
-			sigs <- nil
-			break
-		}
-		time.Sleep(50 * time.Millisecond)
-	}
-}
-
-func pipe2SvrConn(cfg Config, cconn *CryptConn) (err error) {
-	dst, err := net.Dial(cfg.flgNetwork, cfg.flgFwdAddr)
-	if err != nil {
-		return
-	}
-	pipe2(cconn, dst)
-	return
-}
-
-func pipe2SvrStdout(cconn *CryptConn) (err error) {
-	defer cconn.Close()
-	sigs := make(chan error, 1)
-	go func() {
-		_, err := io.Copy(os.Stdout, cconn)
-		sigs <- err
-	}()
-	err = <-sigs
-	return
-}
-
-func pipe2SvrStdinStdout(cconn *CryptConn) (err error) {
-	defer cconn.Close()
-	sigs := make(chan error, 1)
-	go func() {
-		_, err := io.Copy(os.Stdout, cconn)
-		sigs <- err
-	}()
-	go func() {
-		_, err := io.Copy(cconn, os.Stdin)
-		sigs <- err
-	}()
-	err = <-sigs
-	return
 }

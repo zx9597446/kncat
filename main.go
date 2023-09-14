@@ -29,7 +29,7 @@ func logf(f string, v ...interface{}) {
 	}
 }
 
-func init() {
+func initFlags() {
 	flag.StringVar(&cfg.flgListenAddr, "l", ":9597", "for server: listening on")
 	flag.StringVar(&cfg.flgConnectAddr, "c", "", "for client: connect to")
 	flag.StringVar(&cfg.flgSecretKey, "s", "", "your secret key")
@@ -45,13 +45,11 @@ func init() {
 }
 
 func main() {
+	initFlags()
+
 	if cfg.flgConnectAddr != "" {
 		logf("connect to %s", cfg.flgConnectAddr)
-		if !cfg.flgReverse {
-			go startClient(cfg)
-		} else {
-			go startReverseClient(cfg)
-		}
+		go startClient(cfg)
 	} else if cfg.flgListenAddr != "" {
 		logf("listen on %s", cfg.flgListenAddr)
 		go startServer(cfg)
