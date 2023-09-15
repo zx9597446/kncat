@@ -28,23 +28,17 @@ func startClient(cfg Config) {
 	if err != nil {
 		logf("run client error: %s", err)
 	}
-	os.Exit(0)
+	logf("client exit")
+	chSigs <- os.Interrupt
 }
 
 func runClient(cfg Config, cconn *CryptConn) (err error) {
 	if cfg.flgFwdAddr != "" {
 		return clientForwardPort(cfg.flgReverse, cfg.flgNetwork, cfg.flgFwdAddr, cconn)
-	} else if cfg.flgCommand != "" {
-		if !cfg.flgReverse {
-			return pipeStdInOut(os.Stdin, os.Stdout, cconn)
-		} else {
-			return pipeCmd2Conn(cfg.flgCommand, cconn)
-		}
-	} else {
-		if !cfg.flgReverse {
-			return pipeIn(os.Stdin, cconn)
-		} else {
-			return pipeOut(os.Stdout, cconn)
-		}
 	}
+	// client reverse: exec cmd mode
+	if cfg.flgCommand != "" && cfg.flgReverse {
+		return pipeCmd2Conn(cfg.flgCommand, cconn)
+	}
+	return pipeStdInOut(os.Stdin, os.Stdout, cconn)
 }

@@ -17,10 +17,10 @@ type Config struct {
 	flgReverse                                bool
 }
 
-var cfg = Config{}
-
 var (
 	logger = log.New(os.Stderr, "[verbose]: ", log.LstdFlags|log.Lshortfile)
+	cfg    = Config{}
+	chSigs = make(chan os.Signal, 1)
 )
 
 func logf(f string, v ...interface{}) {
@@ -54,8 +54,12 @@ func main() {
 		logf("listen on %s", cfg.flgListenAddr)
 		go startServer(cfg)
 	}
+	waitSignals()
+}
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	<-sigs
+func waitSignals() {
+	signal.Notify(chSigs, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
+	s := <-chSigs
+	logf("signal: %v", s)
 }

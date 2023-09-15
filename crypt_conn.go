@@ -99,15 +99,3 @@ func (c *CryptConn) Write(b []byte) (int, error) {
 func (c *CryptConn) Close() error {
 	return c.Conn.Close()
 }
-
-func (c *CryptConn) CloseRead() {
-	if Conn, ok := c.Conn.(*net.TCPConn); ok {
-		Conn.CloseRead()
-	}
-}
-
-func (c *CryptConn) CloseWrite() {
-	if Conn, ok := c.Conn.(*net.TCPConn); ok {
-		Conn.CloseWrite()
-	}
-}

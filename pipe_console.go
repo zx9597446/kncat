@@ -9,6 +9,7 @@ import (
 
 func pipeStdInOut(stdin, stdout *os.File, cconn *CryptConn) (err error) {
 	defer cconn.Close()
+	logf("pipe stdin/stdout: -> %s", cconn.RemoteAddr().String())
 	sigs := make(chan error, 1)
 	go func() {
 		_, err := io.Copy(stdout, cconn)
@@ -19,6 +20,7 @@ func pipeStdInOut(stdin, stdout *os.File, cconn *CryptConn) (err error) {
 		sigs <- err
 	}()
 	err = <-sigs
+	logf("pipe stdin/stdout done: %v", err)
 	return
 }
 

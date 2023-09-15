@@ -32,7 +32,7 @@ func listenAndPipe(network, addr string, cconn *CryptConn) (err error) {
 			return err
 		}
 		if err = pipe2Conn(cconn, conn); err != nil {
-			logf("pipe2Conn error: %s", err)
+			logf("pipe2Conn error: %v", err)
 		}
 	}
 }
@@ -45,11 +45,12 @@ func connectAndPipe(network, addr string, cconn *CryptConn) (err error) {
 	return pipe2Conn(cconn, conn)
 }
 
-func pipe2Conn(dst io.ReadWriteCloser, src io.ReadWriteCloser) (err error) {
+func pipe2Conn(dst net.Conn, src net.Conn) (err error) {
 	defer func() {
 		dst.Close()
 		src.Close()
 	}()
+	logf("pipe to conn: %s -> %s", src.LocalAddr().String(), dst.RemoteAddr().String())
 	sigs := make(chan error, 1)
 	go func() {
 		_, err := io.Copy(dst, src)
@@ -61,5 +62,6 @@ func pipe2Conn(dst io.ReadWriteCloser, src io.ReadWriteCloser) (err error) {
 		sigs <- err
 	}()
 	err = <-sigs
+	logf("pipe to conn done: %v", err)
 	return
 }
