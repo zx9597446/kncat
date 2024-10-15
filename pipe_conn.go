@@ -31,9 +31,11 @@ func listenAndPipe(network, addr string, cconn *CryptConn) (err error) {
 		if err != nil {
 			return err
 		}
-		if err = pipe2Conn(cconn, conn); err != nil {
-			logf("pipe2Conn error: %v", err)
-		}
+		go func(conn net.Conn) {
+			if err := pipe2Conn(cconn, conn); err != nil {
+				logf("pipe2Conn error: %v", err)
+			}
+		}(conn)
 	}
 }
 
